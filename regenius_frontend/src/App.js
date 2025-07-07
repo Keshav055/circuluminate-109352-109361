@@ -4,6 +4,7 @@ import { MainLayout } from "./components/MainLayout";
 import { AuthPage } from "./modules/AuthPage";
 import { Dashboard } from "./modules/Dashboard";
 import { Placeholder } from "./modules/Placeholder";
+import { RepairMaintenance } from "./modules/RepairMaintenance";
 import {
   MdBuild, MdReplay, MdRecycling, MdPieChart, MdPeople,
   MdCardGiftcard, MdExtension, MdLocationOn, MdCameraAlt, MdPerson
@@ -20,10 +21,9 @@ const MODULES = [
   {
     key: "/repair",
     name: "Repair Hub",
-    component: () => <Placeholder
-      name="Repair & Maintenance Hub"
-      icon={<MdBuild />}
-      description="AI diagnostics, AR repair guides, local pro network, IoT integration, and 3D part sourcing." />,
+    component: RepairMaintenance,
+    icon: <MdBuild />,
+    description: "AI diagnostics, AR repair guides, local pro network, IoT integration, and 3D part sourcing.",
   },
   {
     key: "/reuse",
