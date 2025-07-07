@@ -5,6 +5,7 @@ import { AuthPage } from "./modules/AuthPage";
 import { Dashboard } from "./modules/Dashboard";
 import { Placeholder } from "./modules/Placeholder";
 import { RepairMaintenance } from "./modules/RepairMaintenance";
+import { ReuseExchangeRental } from "./modules/ReuseExchangeRental";
 import {
   MdBuild, MdReplay, MdRecycling, MdPieChart, MdPeople,
   MdCardGiftcard, MdExtension, MdLocationOn, MdCameraAlt, MdPerson
@@ -28,10 +29,9 @@ const MODULES = [
   {
     key: "/reuse",
     name: "Reuse & Exchange",
-    component: () => <Placeholder
-      name="Reuse, Exchange & Rental"
-      icon={<MdReplay />}
-      description="Marketplace for P2P exchanges, rentals, live chat, and eco-friendly swaps." />,
+    component: ReuseExchangeRental,
+    icon: <MdReplay />,
+    description: "Marketplace for P2P exchanges, rentals, live chat, and eco-friendly swaps.",
   },
   {
     key: "/recycle",
