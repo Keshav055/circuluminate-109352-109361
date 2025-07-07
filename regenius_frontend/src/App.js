@@ -6,6 +6,9 @@ import { Dashboard } from "./modules/Dashboard";
 import { Placeholder } from "./modules/Placeholder";
 import { RepairMaintenance } from "./modules/RepairMaintenance";
 import { ReuseExchangeRental } from "./modules/ReuseExchangeRental";
+// Import for ImpactIncentives
+// (dynamic require used in MODULES, so this is not strictly needed here, but explicit import for possible future static usage)
+// import { ImpactIncentives } from "./modules/ImpactIncentives";
 import {
   MdBuild, MdReplay, MdRecycling, MdPieChart, MdPeople,
   MdCardGiftcard, MdExtension, MdLocationOn, MdCameraAlt, MdPerson
@@ -44,10 +47,10 @@ const MODULES = [
   {
     key: "/impact",
     name: "Impact Tracker",
-    component: () => <Placeholder
-      name="Impact & Incentives"
-      icon={<MdCardGiftcard />}
-      description="Track tokens, badges, challenges, and chart your positive impact and rewards." />,
+    // Replace Placeholder with new module
+    component: require("./modules/ImpactIncentives").ImpactIncentives,
+    icon: <MdCardGiftcard />,
+    description: "Track tokens, badges, challenges, and chart your positive impact and rewards."
   },
   {
     key: "/community",
