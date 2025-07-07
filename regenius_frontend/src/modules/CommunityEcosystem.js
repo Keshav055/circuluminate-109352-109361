@@ -21,16 +21,36 @@ function apiUrl(path) {
   return `${API_BASE}${path}`;
 }
 
-// --- Forums Fetch helpers --- //
+/**
+ * PUBLIC_INTERFACE
+ * Fetch community forum threads/topics from backend
+ * If backend unavailable, fall back to demo threads.
+ */
 async function fetchThreads(setError) {
+  const DEMO_THREADS = [
+    {
+      id: "demo1",
+      title: "How do I repair a cracked phone screen sustainably?",
+      body: "I want to avoid e-waste and repair my phone's cracked glass myself or locally. Any tips or shops?",
+      author: "EcoFan",
+      replyCount: 2
+    },
+    {
+      id: "demo2",
+      title: "Community recycling event next week!",
+      body: "Join us for a drop-off event. Bring plastics, e-waste, etc.",
+      author: "GreenChris",
+      replyCount: 1
+    }
+  ];
   try {
     setError("");
     const resp = await fetch(apiUrl("/forums/threads"));
     if (!resp.ok) throw new Error("Failed to load threads");
     return await resp.json();
   } catch (e) {
-    setError("Could not fetch topics/threads.");
-    return [];
+    setError(`Could not fetch topics/threads.${e && e.message ? " " + e.message : ""} Showing demo topics.`);
+    return DEMO_THREADS;
   }
 }
 
@@ -87,10 +107,36 @@ async function postReply({ threadId, reply, author }, setError) {
 }
 
 /**
- * Fetch event/workshop list from backend
+ * PUBLIC_INTERFACE
+ * Fetch event/workshop list from backend.
+ * Returns fallback demo data if backend fails/unavailable.
  * Expects: [{ id, title, description, date, time, location, host, spots, registered, ... }]
  */
 async function fetchEvents(setEventError) {
+  const DEMO_EVENTS = [
+    {
+      id: "event1",
+      title: "Repair Cafe - Fix Your Broken Gadgets",
+      description: "Join our community event and get help repairing small electronics and appliances. Tools & volunteers available.",
+      date: new Date(Date.now() + 4 * 24 * 3600000).toISOString(), // 4 days from now
+      time: "15:00–18:00",
+      location: "Makerspace, Main Street",
+      host: "CircularTown",
+      spots: 16,
+      registered: false
+    },
+    {
+      id: "event2",
+      title: "Workshop: Upcycling Old Clothing",
+      description: "Hands-on session: Give new life to your unused clothes. Bring your own or use ours.",
+      date: new Date(Date.now() + 8 * 24 * 3600000).toISOString(), // 8 days from now
+      time: "10:30–12:30",
+      location: "GreenCenter Hall",
+      host: "EcoDesigners",
+      spots: 20,
+      registered: false
+    }
+  ];
   try {
     setEventError("");
     const resp = await fetch(apiUrl("/events"));
@@ -98,8 +144,10 @@ async function fetchEvents(setEventError) {
     const events = await resp.json();
     return Array.isArray(events) ? events : [];
   } catch (e) {
-    setEventError("Could not fetch events.");
-    return [];
+    setEventError(
+      `Could not fetch events.${e && e.message ? " " + e.message : ""} Displaying sample events.`
+    );
+    return DEMO_EVENTS;
   }
 }
 
@@ -204,7 +252,10 @@ function EventWorkshopCard({ user }) {
       }}>
         <b>Learn, share, and grow:</b> Workshops and local events for a circular economy.
       </div>
-      {eventError && <div style={{ color: COLORS.error, fontWeight: 600, marginBottom: 9 }}>{eventError}</div>}
+      {eventError && <div style={{ color: COLORS.error, fontWeight: 600, marginBottom: 9 }}>
+        {eventError}
+        <div style={{color:'#955',fontWeight:400,fontSize:13}}>(This is sample data. <b>Try again later</b> or <b>contact support</b> if issue persists.)</div>
+      </div>}
       {eventLoading ? (
         <div style={{ color: COLORS.accent, fontWeight: 500, fontSize: 15 }}>Loading events...</div>
       ) : (
@@ -492,7 +543,10 @@ export function CommunityEcosystem({ user }) {
           </form>)
         }
         {forumError &&
-          <div style={{ color: COLORS.error, fontWeight: 600, marginBottom: 9 }}>{forumError}</div>
+          <div style={{ color: COLORS.error, fontWeight: 600, marginBottom: 9 }}>
+            {forumError}
+            <div style={{color:'#955',fontWeight:400,fontSize:13}}>(This is sample data. <b>Try again later</b> or <b>contact support</b> if issue persists.)</div>
+          </div>
         }
         {forumLoading ?
           (<div style={{ color: COLORS.accent, fontWeight: 500 }}>
