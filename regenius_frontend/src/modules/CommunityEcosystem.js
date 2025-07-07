@@ -771,29 +771,29 @@ function MentorshipSection({ user }) {
         marginBottom: 7
       }}>
         {reqSuccess && (
-          <div style={{color: COLORS.success, fontWeight: 600, marginBottom: 7}}>
-            <MdCheckCircle style={{verticalAlign: "-4%", color: COLORS.secondary, marginRight: 6}}/>
+          <div style={{ color: COLORS.success, fontWeight: 600, marginBottom: 7 }}>
+            <MdCheckCircle style={{ verticalAlign: "-4%", color: COLORS.secondary, marginRight: 6 }} />
             {reqSuccess}
           </div>
         )}
         {mentorshipError && (
-          <span style={{color: COLORS.error, fontWeight: 500}}>{mentorshipError}</span>
+          <span style={{ color: COLORS.error, fontWeight: 500 }}>{mentorshipError}</span>
         )}
         {!reqSuccess && <span>
           Ready to grow? <b>Find a mentor</b> or <b>offer yourself</b> as a mentor! <br />
-          <a href="#" style={{color: COLORS.accent, textDecoration: "underline", marginRight:8}}
+          <a href="#" style={{ color: COLORS.accent, textDecoration: "underline", marginRight: 8 }}
             onClick={e => { e.preventDefault(); setShowRequest(s => !s); setRequestType("find"); }}>
-              {showRequest && requestType==="find" ? "Cancel" : "Request a Mentor"}
+            {showRequest && requestType === "find" ? "Cancel" : "Request a Mentor"}
           </a>
-          <a href="#" style={{color: COLORS.secondary, textDecoration: "underline", marginLeft:8}}
+          <a href="#" style={{ color: COLORS.secondary, textDecoration: "underline", marginLeft: 8 }}
             onClick={e => { e.preventDefault(); setShowRequest(s => !s); setRequestType("offer"); }}>
-              {showRequest && requestType==="offer" ? "Cancel" : "Offer to Mentor"}
+            {showRequest && requestType === "offer" ? "Cancel" : "Offer to Mentor"}
           </a>
         </span>}
       </div>
       {showRequest && (
-        <form onSubmit={handleRequest} style={{background:"#fcfff7",borderRadius:13,padding: "19px 13px",marginBottom:10}}>
-          <div style={{fontWeight:600, marginBottom:6}}>
+        <form onSubmit={handleRequest} style={{ background: "#fcfff7", borderRadius: 13, padding: "19px 13px", marginBottom: 10 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>
             {requestType === "find" ? "Mentor Match Request" : "Register as Mentor"}
           </div>
           <FormField
@@ -812,7 +812,7 @@ function MentorshipSection({ user }) {
             required
             placeholder="e.g. Mon-Wed 6-9pm, Weekends, etc."
           />
-          <GreenButton type="submit" style={{marginTop:4, width:130}} disabled={requesting}>
+          <GreenButton type="submit" style={{ marginTop: 4, width: 130 }} disabled={requesting}>
             {requesting ? "Submitting..." : (requestType === "find" ? "Find Mentor" : "Offer Mentorship")}
           </GreenButton>
         </form>
@@ -821,95 +821,164 @@ function MentorshipSection({ user }) {
       <div style={{
         fontWeight: 700, color: COLORS.primary, fontSize: 15.5, margin: "9px 0 7px", display: "flex", alignItems: "center", gap: 9
       }}>
-        <MdPeople style={{color:COLORS.accent}}/> Available Mentors
+        <MdPeople style={{ color: COLORS.accent }} /> Available Mentors
       </div>
-      <ul style={{margin:0, padding:0, listStyle:"none"}}>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {loading
-          ? <li style={{color:COLORS.accent}}>Loading mentor directory...</li>
+          ? <li style={{ color: COLORS.accent }}>Loading mentor directory...</li>
           : mentors.length === 0
-            ? <li style={{color:"#888"}}>No mentors listing found.</li>
+            ? <li style={{ color: "#888" }}>No mentors listing found.</li>
             : mentors.map(m => (
-                  <li key={m.id}
-                    style={{
-                      marginBottom:9, borderRadius:12, background: "#f9f8fd",
-                      boxShadow: "0 1px 6px #5cf6e611", padding: "12px 11px"
-                    }}>
-                    <div style={{display:"flex",alignItems:"flex-start",gap:13}}>
-                      <div>
-                        <MdAssignmentInd size={25} style={{color:COLORS.secondary}}/>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:700, fontSize:16, color:COLORS.primary}}>{m.name}</div>
-                        <div style={{fontSize:13.5, color:COLORS.accent, margin: "2px 0 1px"}}>
-                          {Array.isArray(m.skills)? m.skills.join(", "): m.skills}
-                          {m.location && <> — <span style={{color:"#555"}}>{m.location}</span></>}
-                        </div>
-                        <div style={{color:"#665", fontSize:13,marginBottom: 2}}>
-                          {m.bio}
-                        </div>
-                        <div style={{color:"#1a573f", fontSize:12.8,marginBottom: 3}}>
-                          <b>Availability:</b> {m.available || m.availability}
-                        </div>
-                        <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                          <GreenButton type="button" style={{fontSize:13, padding:"6px 15px"}} onClick={()=>{
-                            setSelectMentor(m); setMessageText(""); setMsgStatus("");
-                          }}>
-                            Message
-                          </GreenButton>
-                        </div>
-                      </div>
+              <li key={m.id}
+                style={{
+                  marginBottom: 13,
+                  borderRadius: 13,
+                  background: "#f8fffc",
+                  boxShadow: "0 2px 9px #e3f9eb28",
+                  padding: "15px 15px",
+                  border: `1.5px solid #${COLORS.accent.replace('#', '')}1c`
+                }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    borderRadius: "50%", background: "#fffbe8",
+                    boxShadow: "0 1.5px 9px #afc86618", width: 48, height: 48, justifyContent: "center"
+                  }}>
+                    <MdAssignmentInd size={28} style={{ color: COLORS.secondary }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: COLORS.primary, letterSpacing: ".01em" }}>
+                      {m.name}
                     </div>
-                  </li>
-              ))}
+                    <div style={{
+                      fontSize: 14, color: COLORS.accent,
+                      margin: "2px 0 1px", fontWeight: 500, whiteSpace: "pre-line", wordBreak: "break-word"
+                    }}>
+                      {Array.isArray(m.skills) ? m.skills.join(", ") : m.skills}
+                      {m.location && <> – <span style={{ color: "#555" }}>{m.location}</span></>}
+                    </div>
+                    {m.bio &&
+                      <div style={{ color: "#665", fontSize: 13, marginBottom: 2 }}>
+                        {m.bio}
+                      </div>
+                    }
+                    <div style={{
+                      color: "#458715", fontSize: 13, marginBottom: 3, fontWeight: 500
+                    }}>
+                      <b>Availability:</b> {m.available || m.availability || <span style={{ color: "#bbb" }}>Not specified</span>}
+                    </div>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 1 }}>
+                      <GreenButton
+                        type="button"
+                        style={{
+                          fontSize: 15,
+                          padding: "7px 23px",
+                          background: COLORS.primary,
+                          color: COLORS.textInverse,
+                          boxShadow: "0 1px 3px #44af551c"
+                        }}
+                        onClick={() => {
+                          setSelectMentor(m); setMessageText(""); setMsgStatus("");
+                        }}
+                        aria-label={`Message mentor ${m.name}`}
+                      >
+                        Message
+                      </GreenButton>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
       </ul>
       {/* Direct Message Modal */}
       {selectMentor &&
-        <div style={{
-          position:"fixed", top:0,left:0,width:"100vw",height:"100vh",
-          background:"#113a1843",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"
-        }}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mentorModalTitle"
+          tabIndex={-1}
+          style={{
+            position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+            background: "#113a1843", zIndex: 200, display: "flex",
+            alignItems: "center", justifyContent: "center"
+          }}>
           <div style={{
-            background:"#fff",minWidth:310,maxWidth:"92vw",minHeight: 160,
-            borderRadius:16, boxShadow:"0 6px 22px #206a3932", padding:"30px 23px",maxWidth:350,position:"relative"
+            background: "#fff",
+            minWidth: 310, minHeight: 180,
+            borderRadius: 20,
+            boxShadow: "0 8px 32px #1c7c3534",
+            padding: "34px 25px 28px 25px",
+            maxWidth: 355,
+            position: "relative",
+            border: `1.5px solid #${COLORS.secondary.replace('#', '')}33`
           }}>
             <button
               aria-label="Close dialog"
-              onClick={()=>{setSelectMentor(null);setMsgStatus("");setMessageText("");}}
+              onClick={() => { setSelectMentor(null); setMsgStatus(""); setMessageText(""); }}
               style={{
-                position:"absolute",right:17,top:17,background:"none",
-                border:"none",fontSize:25,color:"#7a8f73",cursor:"pointer"
-              }}>×</button>
-            <div style={{fontWeight:700,fontSize:17,color:COLORS.primary,marginBottom:3}}>
+                position: "absolute", right: 17, top: 17, background: "none",
+                border: "none", fontSize: 25, color: "#7a8f73", cursor: "pointer", fontWeight: 700
+              }}>
+              ×
+            </button>
+            <div id="mentorModalTitle" style={{
+              fontWeight: 800, fontSize: 20,
+              color: COLORS.primary, marginBottom: 5, letterSpacing: ".01em"
+            }}>
               Message {selectMentor.name}
             </div>
-            <div style={{fontSize:14,color:"#444",marginBottom:7}}>
-              <b>Topics:</b> {Array.isArray(selectMentor.skills)? selectMentor.skills.join(", "): selectMentor.skills}
+            <div style={{ fontSize: 14, color: "#444", marginBottom: 8 }}>
+              <b>Topics:</b> {Array.isArray(selectMentor.skills) ? selectMentor.skills.join(", ") : selectMentor.skills}
             </div>
             <form onSubmit={handleSendMessage}>
               <input
                 type="text"
                 value={messageText}
                 required
-                onChange={e=>setMessageText(e.target.value)}
-                placeholder="Write your message here..."
+                onChange={e => setMessageText(e.target.value)}
+                placeholder="Write your message here…"
+                aria-label={`Message to ${selectMentor.name}`}
                 style={{
-                  width:"100%", borderRadius:8,
-                  border:"1.2px solid #aad8b6",padding:"10px 10px",
-                  fontSize:15, marginBottom:11
+                  width: "100%", borderRadius: 9,
+                  border: `1.3px solid #${COLORS.accent.replace('#', '')}88`,
+                  padding: "11px 11px",
+                  fontSize: 15.5, marginBottom: 12, background: "#fbfaf7"
                 }}
               />
-              <GreenButton type="submit" style={{fontWeight:600, fontSize:15, minWidth:110, padding:"7px 15px"}}>
+              <GreenButton
+                type="submit"
+                style={{
+                  fontWeight: 700, fontSize: 15.5, minWidth: 115, padding: "7px 19px",
+                  background: COLORS.secondary, color: "#1a2630"
+                }}
+                aria-label={`Send message to ${selectMentor.name}`}
+              >
                 Send
               </GreenButton>
             </form>
             {msgStatus &&
-              <div style={{color:COLORS.success,fontWeight:600,marginTop:8}}>
-                <MdCheckCircle style={{verticalAlign:"-10%",color:COLORS.secondary,marginRight:5}}/>
+              <div
+                role="status"
+                style={{
+                  color: COLORS.success,
+                  fontWeight: 700,
+                  marginTop: 12,
+                  marginBottom: -8,
+                  fontSize: 15.5,
+                  letterSpacing: ".01em"
+                }}>
+                <MdCheckCircle style={{
+                  verticalAlign: "-12%",
+                  color: COLORS.secondary,
+                  marginRight: 6
+                }} />
                 {msgStatus}
-              </div>}
+              </div>
+            }
           </div>
         </div>
       }
     </div>
   );
 }
+
