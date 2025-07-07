@@ -26,6 +26,12 @@ function apiUrl(path) {
  * Fetch community forum threads/topics from backend
  * If backend unavailable, fall back to demo threads.
  */
+/**
+ * PUBLIC_INTERFACE
+ * Fetch community forum threads/topics from backend with robust Content-Type check.
+ * If backend unavailable, fall back to demo threads.
+ * Enhanced error info for HTML/non-JSON response.
+ */
 async function fetchThreads(setError) {
   const DEMO_THREADS = [
     {
@@ -47,21 +53,60 @@ async function fetchThreads(setError) {
     setError("");
     const resp = await fetch(apiUrl("/forums/threads"));
     if (!resp.ok) throw new Error("Failed to load threads");
-    return await resp.json();
+    const contentType = resp.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await resp.json();
+    } else {
+      // Likely backend misconfiguration, auth error, or server error/HTML.
+      const text = await resp.text();
+      if (typeof window !== "undefined" && window.console) {
+        console.error("Expected JSON, got non-JSON response:", text);
+      }
+      setError(`Could not fetch topics/threads. The backend did not return valid JSON${
+        API_BASE ? " (check the configuration for REACT_APP_API_BASE: '" + API_BASE + "')" : ""
+      }. First bytes: ${text.slice(0, 120).replace(/\\n/g, " ").replace(/</g, "&lt;")} ... Showing demo topics.`);
+      return DEMO_THREADS;
+    }
   } catch (e) {
-    setError(`Could not fetch topics/threads.${e && e.message ? " " + e.message : ""} Showing demo topics.`);
+    setError(
+      `Could not fetch topics/threads.${
+        e && e.message ? " " + e.message : ""
+      }${API_BASE ? " (Check REACT_APP_API_BASE: '" + API_BASE + "')" : ""} Showing demo topics.`
+    );
     return DEMO_THREADS;
   }
 }
 
+/**
+ * PUBLIC_INTERFACE
+ * Fetch replies for a given thread, with robust Content-Type handling.
+ */
 async function fetchReplies(threadId, setError) {
   try {
     setError("");
     const resp = await fetch(apiUrl(`/forums/threads/${threadId}/replies`));
     if (!resp.ok) throw new Error("Failed to load replies");
-    return await resp.json();
+    const contentType = resp.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await resp.json();
+    } else {
+      const text = await resp.text();
+      if (typeof window !== "undefined" && window.console) {
+        console.error("Expected JSON for replies, got non-JSON response:", text);
+      }
+      setError(
+        `Could not fetch replies for thread. Backend did not return JSON${
+          API_BASE ? " (check REACT_APP_API_BASE: '" + API_BASE + "')" : ""
+        }. First bytes: ${text.slice(0, 80).replace(/\\n/g, " ").replace(/</g, "&lt;")}`
+      );
+      return [];
+    }
   } catch (e) {
-    setError("Could not fetch replies for thread.");
+    setError(
+      `Could not fetch replies for thread.${e && e.message ? " " + e.message : ""}${
+        API_BASE ? " (Check REACT_APP_API_BASE: '" + API_BASE + "')" : ""
+      }`
+    );
     return [];
   }
 }
