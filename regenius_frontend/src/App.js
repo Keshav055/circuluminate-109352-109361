@@ -36,10 +36,10 @@ const MODULES = [
   {
     key: "/recycle",
     name: "Resource Recovery",
-    component: () => <Placeholder
-      name="Smart Recycling & Waste Locator"
-      icon={<MdRecycling />}
-      description="AI image recognition, recycling rules, closest locations, and take-back programs." />,
+    component: require("./modules/SmartRecyclingLocator").SmartRecyclingLocator,
+    icon: <MdRecycling />,
+    description:
+      "AI image recognition, recycling rules, closest locations, and take-back programs.",
   },
   {
     key: "/impact",
