@@ -55,10 +55,10 @@ const MODULES = [
   {
     key: "/community",
     name: "Community",
-    component: () => <Placeholder
-      name="Community Ecosystem"
-      icon={<MdPeople />}
-      description="Forums, events, mentoring, and workshops for circularity and repair lovers." />,
+    // Integrated new module (replace Placeholder)
+    component: require("./modules/CommunityEcosystem").CommunityEcosystem,
+    icon: <MdPeople />,
+    description: "Forums, events, mentoring, and workshops for circularity and repair lovers."
   },
   {
     key: "/passport",
