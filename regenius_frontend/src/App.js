@@ -60,10 +60,9 @@ const MODULES = [
   {
     key: "/passport",
     name: "Product Passport",
-    component: () => <Placeholder
-      name="Product Passports"
-      icon={<MdExtension />}
-      description="Blockchain product histories, ownership changes, and recycler verification." />,
+    component: require("./modules/ProductPassport").ProductPassport,
+    icon: <MdExtension />,
+    description: "Blockchain product histories, ownership changes, and recycler verification.",
   },
   {
     key: "/locator",

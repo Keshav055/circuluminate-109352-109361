@@ -6,6 +6,7 @@ import {
   MdRecycling, // Resource Recovery
   MdPieChart,  // Dashboard/Impact Tracker
   MdPeople,    // Community
+  MdExtension, // Product Passport
   MdLogout     // Logout
 } from "react-icons/md";
 
@@ -16,6 +17,7 @@ const navItems = [
   { label: "Reuse & Exchange", icon: <MdReplay size={22}/>, to: "/reuse" },
   { label: "Resource Recovery", icon: <MdRecycling size={22}/>, to: "/recycle" },
   { label: "Impact Tracker", icon: <MdPieChart size={22}/>, to: "/impact" },
+  { label: "Product Passport", icon: <MdExtension size={22}/>, to: "/passport" },
   { label: "Community", icon: <MdPeople size={22}/>, to: "/community" },
 ];
 
