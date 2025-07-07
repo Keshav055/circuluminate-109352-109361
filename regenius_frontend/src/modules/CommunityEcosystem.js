@@ -5,7 +5,7 @@ import { FormField } from "../components/FormField";
 import { COLORS } from "../theme";
 import {
   MdForum, MdChat, MdReply, MdEvent, MdGroup, MdAssignmentInd,
-  MdWork, MdHowToReg, MdCheckCircle, MdArrowForward
+  MdWork, MdHowToReg, MdCheckCircle, MdArrowForward, MdRefresh, MdPeople
 } from "react-icons/md";
 
 /**
@@ -21,7 +21,7 @@ function apiUrl(path) {
   return `${API_BASE}${path}`;
 }
 
-// --- Fetch helpers --- //
+// --- Forums Fetch helpers --- //
 async function fetchThreads(setError) {
   try {
     setError("");
@@ -84,6 +84,225 @@ async function postReply({ threadId, reply, author }, setError) {
     setError(e.message || "Could not post reply.");
     return null;
   }
+}
+
+/**
+ * Fetch event/workshop list from backend
+ * Expects: [{ id, title, description, date, time, location, host, spots, registered, ... }]
+ */
+async function fetchEvents(setEventError) {
+  try {
+    setEventError("");
+    const resp = await fetch(apiUrl("/events"));
+    if (!resp.ok) throw new Error("Failed to load events");
+    const events = await resp.json();
+    return Array.isArray(events) ? events : [];
+  } catch (e) {
+    setEventError("Could not fetch events.");
+    return [];
+  }
+}
+
+/**
+ * Register for an event/workshop. Expects { eventId, user }
+ * Returns { success, ... }
+ */
+async function registerEvent(eventId, user, setEventError) {
+  try {
+    setEventError("");
+    const resp = await fetch(apiUrl(`/events/${eventId}/register`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user })
+    });
+    if (!resp.ok) {
+      let data;
+      try { data = await resp.json(); } catch {}
+      throw new Error(data?.message || "Registration failed");
+    }
+    return await resp.json();
+  } catch (e) {
+    setEventError(e.message || "Could not register for event.");
+    return null;
+  }
+}
+
+/**
+ * Event/Workshop Listing & Registration UI, consistent with eco-dashboard style.
+ * Polished for accessibility, responsive, in-card feedback. Replaces hardcoded demo.
+ */
+function EventWorkshopCard({ user }) {
+  const [events, setEvents] = useState([]);
+  const [eventLoading, setEventLoading] = useState(true);
+  const [eventError, setEventError] = useState("");
+  const [registering, setRegistering] = useState("");
+  const [regFeedback, setRegFeedback] = useState("");
+  const [regErr, setRegErr] = useState("");
+
+  // Track which event has just been registered so we can optimistically update
+  const [justRegistered, setJustRegistered] = useState(null);
+
+  // Fetch real events from API
+  useEffect(() => {
+    setEventLoading(true);
+    fetchEvents(setEventError).then(evts => {
+      setEvents(evts);
+      setEventLoading(false);
+    });
+  }, []);
+
+  // Handle event registration
+  async function handleRegister(evId) {
+    if (!user || !user.name) {
+      setRegErr("Please sign in to register.");
+      return;
+    }
+    setRegistering(evId);
+    setRegErr("");
+    const res = await registerEvent(evId, user, setRegErr);
+    setRegistering("");
+    if (res && res.success) {
+      setRegFeedback("Registered for event!");
+      setEvents(es =>
+        es.map(ev => ev.id === evId ? { ...ev, registered: true, spots: Math.max(0, (ev.spots || 1) - 1) } : ev)
+      );
+      setJustRegistered(evId);
+      setTimeout(() => {
+        setRegFeedback("");
+        setJustRegistered(null);
+      }, 1400);
+    } else if (res && res.message) {
+      setRegErr(res.message);
+    } else {
+      setRegErr("Could not register at this time.");
+    }
+  }
+
+  return (
+    <Card style={{ background: "#f7fbfa" }} aria-labelledby="eco-events-head">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <MdEvent style={{ color: COLORS.secondary }} size={23} />
+        <b id="eco-events-head" style={{ color: COLORS.primary }}>Upcoming Events & Workshops</b>
+        <GreenButton
+          type="button"
+          style={{ marginLeft: "auto", fontSize: 13, padding: "7px 17px", minWidth: 50 }}
+          onClick={() => {
+            setEventLoading(true);
+            fetchEvents(setEventError).then(evts => {
+              setEvents(evts);
+              setEventLoading(false);
+            });
+          }}
+          aria-label="Refresh events"
+        >
+          <MdRefresh style={{ verticalAlign: -2, marginRight: 6 }} />
+          Refresh
+        </GreenButton>
+      </div>
+      <div style={{
+        color: "#285c3c", marginBottom: 12, fontSize: 14.5
+      }}>
+        <b>Learn, share, and grow:</b> Workshops and local events for a circular economy.
+      </div>
+      {eventError && <div style={{ color: COLORS.error, fontWeight: 600, marginBottom: 9 }}>{eventError}</div>}
+      {eventLoading ? (
+        <div style={{ color: COLORS.accent, fontWeight: 500, fontSize: 15 }}>Loading events...</div>
+      ) : (
+        <>
+          <ul style={{ color: "#444", fontSize: 15, margin: "4px 0 0", paddingLeft: 0, listStyle: "none" }}>
+            {Array.isArray(events) && events.length > 0 ? (
+              events.map(ev => (
+                <li key={ev.id} style={{
+                  marginBottom: 13,
+                  borderRadius: 13,
+                  background: "#f8fffc",
+                  boxShadow: "0 1.5px 6px #e3f9eb19",
+                  padding: "11px 15px",
+                  display: "flex", flexDirection: "column",
+                  border: `1.5px solid ${ev.registered ? COLORS.secondary : COLORS.accent}13`
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <b style={{ fontSize: 17, color: COLORS.primary }}>{ev.title}</b>
+                    <span style={{ fontSize: 13, color: COLORS.accent, marginLeft: 7 }}>
+                      {ev.date ? new Date(ev.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
+                      {ev.time && " – " + ev.time}
+                    </span>
+                    <span style={{
+                      fontWeight: 600,
+                      fontSize: 13,
+                      color: COLORS.secondary,
+                      background: "#ffa60023",
+                      borderRadius: 9,
+                      marginLeft: 10,
+                      padding: "2px 11px"
+                    }}>
+                      {ev.host || "Hosted by Community"}
+                    </span>
+                    {ev.spots !== undefined &&
+                      <span style={{ fontSize: 12, marginLeft: 12, color: "#589c3e" }}>
+                        {ev.spots === 0 ? "Full" : `${ev.spots} spots`}
+                      </span>
+                    }
+                    {ev.registered &&
+                      <span style={{
+                        fontSize: 13, color: COLORS.secondary,
+                        marginLeft: 16, fontWeight: 700
+                      }}>
+                        <MdCheckCircle style={{ color: COLORS.accent, verticalAlign: -4 }} /> Registered
+                      </span>
+                    }
+                  </div>
+                  <div style={{
+                    color: "#285c3c", fontSize: 14, margin: "3px 0 2px", fontWeight: 500, opacity: .9
+                  }}>
+                    {ev.description}
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 13,
+                    marginTop: 5,
+                  }}>
+                    <span style={{ fontSize: 12, color: "#888" }}>{ev.location}</span>
+                    <GreenButton
+                      type="button"
+                      style={{
+                        marginLeft: "auto", fontSize: 14, padding: "7px 19px",
+                        background: ev.registered ? "#d2ede2" : COLORS.primary,
+                        color: ev.registered ? "#206a39" : COLORS.textInverse,
+                        cursor: ev.registered ? "not-allowed" : "pointer"
+                      }}
+                      disabled={!!ev.registered || registering === ev.id || (ev.spots === 0)}
+                      onClick={() => handleRegister(ev.id)}
+                      aria-disabled={!!ev.registered || registering === ev.id || (ev.spots === 0)}
+                      aria-label={ev.registered ? "Already Registered" : "Register for " + ev.title}
+                    >
+                      {registering === ev.id
+                        ? <>Registering...</>
+                        : ev.registered
+                          ? <>Registered <MdCheckCircle style={{ verticalAlign: -4, marginLeft: 4 }} /></>
+                          : ev.spots === 0
+                            ? <>Full</>
+                            : <>Register <MdHowToReg style={{ verticalAlign: -4, marginLeft: 5 }} /></>
+                      }
+                    </GreenButton>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li style={{ color: "#888", fontSize: 16, textAlign: "center", marginTop: 19 }}>No upcoming events found.</li>
+            )}
+          </ul>
+          {regFeedback && <div style={{
+            color: COLORS.success, fontWeight: 600, marginTop: 8, marginBottom: 2
+          }}><MdCheckCircle style={{ verticalAlign: -3, marginRight: 3 }} />{regFeedback}</div>}
+          {regErr && <div style={{
+            color: COLORS.error, fontWeight: 600, marginTop: 9
+          }}>{regErr}</div>}
+        </>
+      )}
+    </Card>
+  );
 }
 
 // PUBLIC_INTERFACE
@@ -403,41 +622,7 @@ export function CommunityEcosystem({ user }) {
 
       {/* --- Events and Mentorship --- */}
       <div style={{ display: "grid", gridTemplateColumns: "1.17fr 1fr", gap: 23, alignItems: "start" }}>
-        <Card style={{ background: "#f7fbfa" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8, marginBottom: 4
-          }}>
-            <MdEvent style={{ color: COLORS.secondary }} size={23} />
-            <b style={{ color: COLORS.primary }}>Upcoming Events & Workshops</b>
-          </div>
-          <div style={{
-            color: "#285c3c", marginBottom: 12, fontSize: 14.5
-          }}>
-            <b>Learn, share, and grow: </b>Workshops and local events for a circular economy.
-            {/* In a real scenario, would also fetch from /events endpoint */}
-          </div>
-          {/* Demo static, recommend real integration */}
-          <ul style={{ color: "#444", fontSize: 15, margin: "4px 0 0", paddingLeft: 15 }}>
-            <li style={{ marginBottom: 7 }}>
-              <b>Circularity DIY Repair Night</b> – Apr 18, 7:00pm <br />
-              <span style={{ fontSize: 13, color: COLORS.accent }}>
-                Hosted by Local Library (bring own items)
-              </span>
-            </li>
-            <li style={{ marginBottom: 7 }}>
-              <b>Product Reuse Exchange Fair</b> – May 5, 4:30pm <br />
-              <span style={{ fontSize: 13, color: COLORS.accent }}>
-                EcoCommunity Center (register early!)
-              </span>
-            </li>
-            <li>
-              <b>Mentorship & Career Workshop</b> – May 21, 6pm <br />
-              <span style={{ fontSize: 13, color: COLORS.accent }}>
-                With industry repair experts & green startups.
-              </span>
-            </li>
-          </ul>
-        </Card>
+        <EventWorkshopCard user={user} />
         <Card style={{ background: "#fdfbf4" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8, marginBottom: 4
