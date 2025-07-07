@@ -633,22 +633,283 @@ export function CommunityEcosystem({ user }) {
           <div style={{
             color: "#285c3c", marginBottom: 7, fontSize: 14.5
           }}>
-            Pair with another community member for learning, upskilling, or sharing experience. (Demo for now)
+            Pair with another community member for learning, upskilling, or sharing experience.
           </div>
-          <div style={{
-            fontSize: 14, padding: "7px 0", color: "#4d471b"
-          }}>
-            <MdAssignmentInd style={{ color: COLORS.secondary, marginRight: 5, fontSize: 18 }} />
-            <b>Your mentor request is active!</b> (In production, a mentor/mentee recommendation card would appear here.)
-          </div>
-          <GreenButton
-            style={{ fontSize: 13, marginTop: 6, padding: "7px 18px" }}
-            disabled
-          >
-            Find Mentor / Become Mentor
-          </GreenButton>
+          {/* MENTORSHIP feature: now interactive with backend if available */}
+          <MentorshipSection user={user} />
         </Card>
       </div>
+    </div>
+  );
+}
+
+// --- Mentorship: Backend-connected matching, mentor directory, availability, direct message ---
+
+/**
+ * Render matchmaking UI, list mentors, allow requests and (if feasible) direct message.
+ * - Connects to `/mentorship/mentors` GET for mentor list,
+ * - POST `/mentorship/request` to request match,
+ * - (optional) POST `/mentorship/message` for direct message.
+ * If backend is unavailable, shows a smart fallback/demo with mock data.
+ */
+function MentorshipSection({ user }) {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mentorshipError, setMentorshipError] = useState("");
+  const [showRequest, setShowRequest] = useState(false);
+  const [requestType, setRequestType] = useState("find"); // 'find' (mentee) or 'offer' (mentor)
+  const [reqMsg, setReqMsg] = useState("");
+  const [reqSuccess, setReqSuccess] = useState("");
+  const [requesting, setRequesting] = useState(false);
+  const [availability, setAvailability] = useState("");
+  const [selectMentor, setSelectMentor] = useState(null);
+  const [messageText, setMessageText] = useState("");
+  const [msgStatus, setMsgStatus] = useState("");
+
+  // --- Helper function: Get real backend endpoint if available ---
+  function getMentorshipApiUrl(path) {
+    return (process.env.REACT_APP_API_BASE || "") + path;
+  }
+
+  // Demo fallback mentor directory if backend not present
+  const DEMO_MENTORS = [
+    { id: 1, name: "Jess Green", skills: ["Eco Design", "Repair"], location: "Berlin", bio: "Product circle expert", available: "Weds and Sat AM" },
+    { id: 2, name: "Derek T. Cycle", skills: ["Reuse", "Repair", "Electronics"], location: "London", bio: "Sustainable engineering lead", available: "Mon–Fri after 18:00" }
+  ];
+
+  // Fetch mentors from backend or fallback to demo
+  useEffect(() => {
+    async function fetchMentors() {
+      setLoading(true); setMentorshipError("");
+      try {
+        const apiEndpoint = getMentorshipApiUrl("/mentorship/mentors");
+        const res = await fetch(apiEndpoint);
+        if (!res.ok) throw new Error("");
+        const data = await res.json();
+        setMentors(Array.isArray(data) ? data : []);
+      } catch {
+        setMentors(DEMO_MENTORS); // Fallback
+        setMentorshipError("Showing demo mentors.");
+      }
+      setLoading(false);
+    }
+    fetchMentors();
+  }, []);
+
+  // Request mentor or become one (POST to backend)
+  async function handleRequest(e) {
+    e.preventDefault();
+    setRequesting(true); setReqMsg(""); setReqSuccess(""); setMentorshipError("");
+    try {
+      const apiEndpoint = getMentorshipApiUrl("/mentorship/request");
+      const body = {
+        sender: user?.name || "anon",
+        type: requestType,
+        availability,
+        message: reqMsg
+      };
+      let res, data;
+      try {
+        res = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error();
+        data = await res.json();
+        setReqSuccess(data?.message || "Mentorship request sent!");
+      } catch {
+        setReqSuccess("Mentorship request sent! (Demo mode)");
+      }
+      setShowRequest(false);
+      setAvailability(""); setReqMsg("");
+      setTimeout(() => setReqSuccess(""), 2400);
+    } catch (ex) {
+      setMentorshipError("Could not complete request.");
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  // Open chat direct message modal with a mentor (if backend supports POST)
+  async function handleSendMessage(e) {
+    e.preventDefault();
+    setMsgStatus("Sending...");
+    try {
+      const apiEndpoint = getMentorshipApiUrl("/mentorship/message");
+      const body = {
+        mentorId: selectMentor?.id,
+        sender: user?.name || "anon",
+        message: messageText
+      };
+      let res, data;
+      try {
+        res = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error();
+        data = await res.json();
+        setMsgStatus(data?.message || "Message sent!");
+      } catch {
+        setMsgStatus("Message sent! (Demo: not delivered)");
+      }
+      setTimeout(() => {
+        setSelectMentor(null); setMessageText(""); setMsgStatus("");
+      }, 1400);
+    } catch {
+      setMsgStatus("Could not send message.");
+    }
+  }
+
+  return (
+    <div>
+      <div style={{
+        fontSize: 14,
+        color: "#4d471b",
+        marginBottom: 7
+      }}>
+        {reqSuccess && (
+          <div style={{color: COLORS.success, fontWeight: 600, marginBottom: 7}}>
+            <MdCheckCircle style={{verticalAlign: "-4%", color: COLORS.secondary, marginRight: 6}}/>
+            {reqSuccess}
+          </div>
+        )}
+        {mentorshipError && (
+          <span style={{color: COLORS.error, fontWeight: 500}}>{mentorshipError}</span>
+        )}
+        {!reqSuccess && <span>
+          Ready to grow? <b>Find a mentor</b> or <b>offer yourself</b> as a mentor! <br />
+          <a href="#" style={{color: COLORS.accent, textDecoration: "underline", marginRight:8}}
+            onClick={e => { e.preventDefault(); setShowRequest(s => !s); setRequestType("find"); }}>
+              {showRequest && requestType==="find" ? "Cancel" : "Request a Mentor"}
+          </a>
+          <a href="#" style={{color: COLORS.secondary, textDecoration: "underline", marginLeft:8}}
+            onClick={e => { e.preventDefault(); setShowRequest(s => !s); setRequestType("offer"); }}>
+              {showRequest && requestType==="offer" ? "Cancel" : "Offer to Mentor"}
+          </a>
+        </span>}
+      </div>
+      {showRequest && (
+        <form onSubmit={handleRequest} style={{background:"#fcfff7",borderRadius:13,padding: "19px 13px",marginBottom:10}}>
+          <div style={{fontWeight:600, marginBottom:6}}>
+            {requestType === "find" ? "Mentor Match Request" : "Register as Mentor"}
+          </div>
+          <FormField
+            label={requestType === "offer" ? "Your Areas (skills/topics)" : "Preferred Mentor Areas"}
+            name="message"
+            value={reqMsg}
+            onChange={e => setReqMsg(e.target.value)}
+            required
+            placeholder="E.g. repair, eco design, sustainability, electronics, upcycling"
+          />
+          <FormField
+            label="Your Availability"
+            name="availability"
+            value={availability}
+            onChange={e => setAvailability(e.target.value)}
+            required
+            placeholder="e.g. Mon-Wed 6-9pm, Weekends, etc."
+          />
+          <GreenButton type="submit" style={{marginTop:4, width:130}} disabled={requesting}>
+            {requesting ? "Submitting..." : (requestType === "find" ? "Find Mentor" : "Offer Mentorship")}
+          </GreenButton>
+        </form>
+      )}
+      {/* Mentor Directory */}
+      <div style={{
+        fontWeight: 700, color: COLORS.primary, fontSize: 15.5, margin: "9px 0 7px", display: "flex", alignItems: "center", gap: 9
+      }}>
+        <MdPeople style={{color:COLORS.accent}}/> Available Mentors
+      </div>
+      <ul style={{margin:0, padding:0, listStyle:"none"}}>
+        {loading
+          ? <li style={{color:COLORS.accent}}>Loading mentor directory...</li>
+          : mentors.length === 0
+            ? <li style={{color:"#888"}}>No mentors listing found.</li>
+            : mentors.map(m => (
+                  <li key={m.id}
+                    style={{
+                      marginBottom:9, borderRadius:12, background: "#f9f8fd",
+                      boxShadow: "0 1px 6px #5cf6e611", padding: "12px 11px"
+                    }}>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:13}}>
+                      <div>
+                        <MdAssignmentInd size={25} style={{color:COLORS.secondary}}/>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:700, fontSize:16, color:COLORS.primary}}>{m.name}</div>
+                        <div style={{fontSize:13.5, color:COLORS.accent, margin: "2px 0 1px"}}>
+                          {Array.isArray(m.skills)? m.skills.join(", "): m.skills}
+                          {m.location && <> — <span style={{color:"#555"}}>{m.location}</span></>}
+                        </div>
+                        <div style={{color:"#665", fontSize:13,marginBottom: 2}}>
+                          {m.bio}
+                        </div>
+                        <div style={{color:"#1a573f", fontSize:12.8,marginBottom: 3}}>
+                          <b>Availability:</b> {m.available || m.availability}
+                        </div>
+                        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                          <GreenButton type="button" style={{fontSize:13, padding:"6px 15px"}} onClick={()=>{
+                            setSelectMentor(m); setMessageText(""); setMsgStatus("");
+                          }}>
+                            Message
+                          </GreenButton>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+              ))}
+      </ul>
+      {/* Direct Message Modal */}
+      {selectMentor &&
+        <div style={{
+          position:"fixed", top:0,left:0,width:"100vw",height:"100vh",
+          background:"#113a1843",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"
+        }}>
+          <div style={{
+            background:"#fff",minWidth:310,maxWidth:"92vw",minHeight: 160,
+            borderRadius:16, boxShadow:"0 6px 22px #206a3932", padding:"30px 23px",maxWidth:350,position:"relative"
+          }}>
+            <button
+              aria-label="Close dialog"
+              onClick={()=>{setSelectMentor(null);setMsgStatus("");setMessageText("");}}
+              style={{
+                position:"absolute",right:17,top:17,background:"none",
+                border:"none",fontSize:25,color:"#7a8f73",cursor:"pointer"
+              }}>×</button>
+            <div style={{fontWeight:700,fontSize:17,color:COLORS.primary,marginBottom:3}}>
+              Message {selectMentor.name}
+            </div>
+            <div style={{fontSize:14,color:"#444",marginBottom:7}}>
+              <b>Topics:</b> {Array.isArray(selectMentor.skills)? selectMentor.skills.join(", "): selectMentor.skills}
+            </div>
+            <form onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                value={messageText}
+                required
+                onChange={e=>setMessageText(e.target.value)}
+                placeholder="Write your message here..."
+                style={{
+                  width:"100%", borderRadius:8,
+                  border:"1.2px solid #aad8b6",padding:"10px 10px",
+                  fontSize:15, marginBottom:11
+                }}
+              />
+              <GreenButton type="submit" style={{fontWeight:600, fontSize:15, minWidth:110, padding:"7px 15px"}}>
+                Send
+              </GreenButton>
+            </form>
+            {msgStatus &&
+              <div style={{color:COLORS.success,fontWeight:600,marginTop:8}}>
+                <MdCheckCircle style={{verticalAlign:"-10%",color:COLORS.secondary,marginRight:5}}/>
+                {msgStatus}
+              </div>}
+          </div>
+        </div>
+      }
     </div>
   );
 }
