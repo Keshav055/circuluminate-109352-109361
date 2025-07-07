@@ -15,6 +15,21 @@ import {
  * Aligned with dashboard card/eco style. In-page state and feedback (no popups).
  * Props: { user }
  */
+/**
+ * API_BASE should point to where the backend API is served from.
+ *
+ * IN DEVELOPMENT:
+ * - If running React frontend on http://localhost:3000 and backend at http://localhost:5000,
+ *   you must set up either:
+ *   1. A "proxy" field in package.json (see README) pointing to backend (e.g. "proxy": "http://localhost:5000")
+ *   OR
+ *   2. Set REACT_APP_API_BASE in a .env file to the backend base URL (e.g. "REACT_APP_API_BASE=http://localhost:5000")
+ * - If you do not do this, API requests may return HTML (the dev server's index.html), causing all fetches to fail 
+ *   and demo/sample data to appear.
+ *
+ * PRODUCTION:
+ * - Set REACT_APP_API_BASE via environment variable at build/deploy time if API uses a different origin/path.
+ */
 const API_BASE = process.env.REACT_APP_API_BASE || ""; // e.g. "/api" or "" if same origin
 
 function apiUrl(path) {
