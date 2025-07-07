@@ -2,6 +2,13 @@ import React from "react";
 import { Card } from "../components/Card";
 import { COLORS, SHADOW } from "../theme";
 
+/**
+ * API_BASE is the base URL for backend API requests.
+ * Always use this when making fetch() calls to the backend!
+ * Example: fetch(`${API_BASE}/api/dashboard/data`, ...)
+ */
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
 // Simple circular score dial widget (no package needed)
 function ScoreDial({ score }) {
   const percent = Math.min(Math.max(score, 0), 100);

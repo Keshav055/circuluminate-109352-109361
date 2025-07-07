@@ -5,6 +5,13 @@ import { FormField } from "../components/FormField";
 import { COLORS, SHADOW, RADIUS } from "../theme";
 import { TbBrandGoogle, TbBrandApple } from "react-icons/tb";
 
+/**
+ * API_BASE is the base URL for backend API requests.
+ * Always use this when making fetch() calls to the backend!
+ * Example: fetch(`${API_BASE}/api/auth/login`, ...)
+ */
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
 // PUBLIC_INTERFACE
 export function AuthPage({ onAuth }) {
   const [mode, setMode] = useState("login");
@@ -40,6 +47,9 @@ export function AuthPage({ onAuth }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!validate()) return;
+    // Example for real login:
+    // fetch(`${API_BASE}/api/auth/login`, { ... })
+    //   .then(...)...
     // call onAuth callback for demo (actual API elsewhere)
     onAuth?.({ ...fields, mode });
   }
